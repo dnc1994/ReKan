@@ -1,4 +1,4 @@
-# Couplet
+# ReKan
 Final project for NLP course @ Fudan University.
 
 ## Author
