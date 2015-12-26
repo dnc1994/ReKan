@@ -10,10 +10,10 @@ def viterbi_decode(hidden_transfer, hidden_visible_transfer, init_prob, hidden_c
     optimal_path = np.array([0 for i in range(state_num*top_k_candidates)], dtype='i').reshape(top_k_candidates, state_num)
     max_prob = np.array([0 for i in range(top_k_candidates)], dtype="i")
 
-    # 1.Initialization
+    # 1. Initialization
     state_prob_matrix[:, 0] = init_prob[:] * hidden_visible_transfer[:,0]
 
-    # 2.Recursion
+    # 2. Recursion
     for i in range(0, state_num-1):
         state_prob_matrix[:, i+1] = np.max(state_prob_matrix[:,i].reshape(-1, 1) * hidden_transfer[i, :, :] * hidden_visible_transfer[:, i+1], 0)
         state_optimal_route[:, i+1] = np.argmax(state_prob_matrix[:,i].reshape(-1, 1) * hidden_transfer[i, :, :] * hidden_visible_transfer[:, i], 0)
