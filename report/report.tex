@@ -1,0 +1,137 @@
+\documentclass[12pt]{article}
+\usepackage[top=1.10in, bottom=0.75in, left=1.10in, right=1.10in]{geometry}
+\usepackage{ctex}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titling}
+\usepackage{extramarks}
+
+\iffalse
+\AtBeginDocument{
+\begin{CJK*}{GBK}{SimSun}
+\CJKindent
+\sloppy\CJKspace
+\CJKtilde
+}
+\AtEndDocument{\end{CJK*}}
+\fi
+
+\setlength{\parskip}{0.5em}
+\linespread{1.15}
+
+\newcommand\given[1][]{\:#1\vert\:}
+
+\title{ReKan：基于隐马尔可夫模型的对仗生成}
+\author{章凌豪\\13307130225@fudan.edu.cn}
+\date{}
+
+\begin{document}
+
+\pagenumbering{gobble}
+
+\null  % Empty line
+\nointerlineskip  % No skip for prev line
+\vfill
+\let\snewpage \newpage
+\let\newpage \relax
+\maketitle
+\let \newpage \snewpage
+\vfill 
+\break % page break
+
+\newpage
+
+\pagenumbering{arabic}
+
+\pagestyle{fancy}
+\lhead{\textbf{{\thetitle}}}
+\rhead{\textbf{\nouppercase{\firstleftmark}}}
+\cfoot{\thepage}
+
+\section{Introduction}
+
+\subsection{Motivation}
+
+对联生成是一个很有趣的问题，它需要我们结合恰当的统计语言模型以及关于对联的语言知识。
+
+如果我们将对联的定义放宽到\textbf{对仗文本}，那么对联生成可以有更丰富的应用。一个容易想到的应用是在用于在写文章或写歌词时为我们提供灵感（寻找与一个相对的意象，或是寻找对仗的词语用于前后句中）。ReKan \footnote{ReKan 是日语中“灵感”的罗马音} 就是这样一个基于隐马尔可夫模型的可以自动生成对仗的系统。
+
+\subsection{Overview}
+
+程序用 \textbf{Python 2.7} 编写
+
+提交文件说明：
+
+\begin{table}[ht!]
+\centering
+\begin{tabular}{ll}
+{\bf data/corpus.zip}           & 训练用语料                                 \\
+{\bf src/commons.py}            & 定义一些常量                               \\
+{\bf src/gen\_couplets.py}      & 生成下联的接口以及 Candidate Ranking       \\
+{\bf src/hmm.py}                & HMM 参数计算                               \\
+{\bf src/process\_corpus.py}    & 语料预处理                                 \\
+{\bf src/train.py}              & 训练                                       \\
+{\bf src/utility.py}            & 统计 Ngram 和建哈希表等辅助函数            \\
+{\bf src/viterbi.py}            & Viterbi 算法                               \\
+{\bf web\_dist/}                & Web APP 代码                               \\                                         
+\end{tabular}
+\end{table}
+
+为了方便叙述，报告中一律用\textbf{对联}指代我们所处理的\textbf{对仗文本}
+
+\newpage
+
+\section{Implementation}
+
+\subsection{Corpus Processing}
+
+语料主要来自于《古今实用楹联集成》、《全唐诗》，以及从网络上收集的一些对联和绝句。
+
+在预处理阶段主要是将语料中所有对仗的句子提取出来转换成方便后续处理的格式。
+
+\subsection{Language Modeling}
+
+采用隐马尔可夫模型，将每个字看做一个状态。上联的字之间的关系用转移概率来描述，而上联某一个字到下联对应位置的字之间的关系则用输出概率来描述。
+
+记上联为 $x_1, x_2, ..., x_n$，下联为 $y_1, y_2, ..., y_n$。同时用 $x_i \| y_i$ 来表示一个字对。
+
+首先对语料进行 $Unigrams$ 和 $Bigrams$ 的统计。除此以外还要统计所有的字对 $WordPairs$。
+
+在 ReKan 的假设中，上下联是完全对称的，所以对于每个对联，下面的计算都要在对调上下联之后重复一遍。
+
+转移概率可以由 $Bigrams$ 和 $Unigrams$ 得到：
+
+\begin{equation}
+\forall x_i x_j \in Bigrams \quad P_{transition}(x_i \given x_j) = \frac{Count(x_i x_j)}{Count(x_i)}
+\end{equation}
+
+
+输出概率可以由 $WordPairs$ 和 $Unigrams$ 得到：
+
+\begin{equation}
+\forall x_i \| y_i \in WordPairs \quad P_{output}(x_i \given y_i) = \frac{Count(x_i \| y_i)}{Count(x_i)}
+\end{equation}
+
+\subsection{Candidate Generation}
+
+由以上的计算，HMM 的参数是已知的。所以对于一个给定的上联，可以用 Viterbi 算法求得输出概率最大的 k 个候选下联。
+
+\subsection{Candidate Ranking}
+
+最后通过一个评分函数对候选答案进行重排序，将前 5 个反馈给用户。
+
+\newpage
+
+\section{Demonstration}
+
+ReKan 已经打包成一个 Web APP，可以通过访问 \url{www.baidu.com} 尝试。
+
+下面是一些有趣的结果：
+
+
+\newpage
+
+\section{Discussion}
+
+\end{document}

@@ -80,28 +80,28 @@ def build_hash_tree_node(hash_tree, first_word, second_word, value):
         hash_tree[first_word] = hash_leaf
 
 
-def build_hash_tree(intra_transfer_lines, unigram_lines, bigram_lines):
-    inner_transfer_hash_tree = {}
+def build_hash_tree(output_prob_lines, unigram_lines, bigram_lines):
+    transition_prob_hash_tree = {}
     for line in bigram_lines:
         first_word, second_word, count = line.split(' ')
-        build_hash_tree_node(inner_transfer_hash_tree, first_word, second_word, int(count))
+        build_hash_tree_node(transition_prob_hash_tree, first_word, second_word, int(count))
 
-    intra_transfer_hash_tree = {}
-    for line in intra_transfer_lines:
+    output_prob_hash_tree = {}
+    for line in output_prob_lines:
         [first_word, second_word, prob] = line.split(' ')
-        build_hash_tree_node(intra_transfer_hash_tree, first_word, second_word, float(prob))
+        build_hash_tree_node(output_prob_hash_tree, first_word, second_word, float(prob))
 
     unigram_freq = {}
     for line in unigram_lines:
         word, count = line.split(' ')
         build_hash_dict(unigram_freq, word, int(count))
 
-    return inner_transfer_hash_tree, intra_transfer_hash_tree, unigram_freq
+    return transition_prob_hash_tree, output_prob_hash_tree, unigram_freq
 
 
-def load(intra_transfer_file, unigram_file, bigram_file):
-    f_in = codecs.open(intra_transfer_file, 'r', encoding='utf8')
-    intra_transfer_lines = f_in.readlines()
+def load(output_prob_file, unigram_file, bigram_file):
+    f_in = codecs.open(output_prob_file, 'r', encoding='utf8')
+    output_prob_lines = f_in.readlines()
     f_in.close()
 
     f_in = codecs.open(unigram_file, 'r', encoding='utf8')
@@ -112,4 +112,4 @@ def load(intra_transfer_file, unigram_file, bigram_file):
     bigram_lines = f_in.readlines()
     f_in.close()
 
-    return build_hash_tree(intra_transfer_lines, unigram_lines, bigram_lines)
+    return build_hash_tree(output_prob_lines, unigram_lines, bigram_lines)

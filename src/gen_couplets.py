@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 from hmm import init_model
-from viterbi import viterbi_decode
+from viterbi import viterbi
 from utility import *
 from commons import *
 
@@ -46,22 +46,17 @@ def deal_repeat(first_half, second_half):
 def gen_couplet(first_half):
     assert type(first_half) == unicode
     couplet_length = len(first_half)
-
-    # Visible words
     visible_words = np.array([first_half[i] for i in range (couplet_length)])
-    # Candidate words for each word in first line of couplet
-    hidden_candidate_words = np.array([u' ' for i in range(top_k_word*couplet_length)]).reshape(top_k_word, couplet_length)
-    # Transfer probability from hidden word to visible word
-    hidden_visible_transfer = np.random.rand(top_k_word, couplet_length)
-    # Look for candidate words according to each word in the the first line of couplet
+    hidden_candidate_words = np.array([u' ' for _ in range(top_k_word*couplet_length)]).reshape(top_k_word, couplet_length)
+    output_prob = np.random.rand(top_k_word, couplet_length)
     for i in range(couplet_length):
         key = first_half[i]
-        if not intra_transfer_tree.has_key(key):
+        if not output_prob_tree.has_key(key):
             print '%s, Cannot generate couplet' % key
             return ''
 
-        hash_leaf = intra_transfer_tree[key]
-        hidden_candidate_words[:,i], hidden_visible_transfer[:,i] = gen_candidates(first_half, hash_leaf, top_k_word)
+        hash_leaf = output_prob_tree[key]
+        hidden_candidate_words[:,i], output_prob[:,i] = gen_candidates(first_half, hash_leaf, top_k_word)
 
     for i in range(couplet_length):
         candidate = u''
@@ -69,20 +64,22 @@ def gen_couplet(first_half):
             candidate += hidden_candidate_words[j, i]
 
     try:
-        hidden_transfer, init_prob = init_model(inner_transfer_tree, unigram_freq, hidden_candidate_words, top_k_word)
+        transition_prob, init_prob = init_model(transition_prob_tree, unigram_freq, hidden_candidate_words, top_k_word)
     except:
         return ''
 
-    # Now, use viterbi algorithm to decode and get most probable path
-    optimal_path, prob = viterbi_decode(hidden_transfer, hidden_visible_transfer, init_prob, [], visible_words, top_k_word, top_k_candidate)
+    optimal_path, prob = viterbi(transition_prob, output_prob, init_prob, [], visible_words, top_k_word, top_k_candidate)
     optimal_path = deal_repeat(first_half, optimal_path)
 
-    # Output the result
+    results = []
     for i in range(optimal_path.shape[0]):
-        result = u''
+        result = ''
         for j in range(optimal_path.shape[1]):
             result += hidden_candidate_words[optimal_path[i, j], j]
         print result
+        results.append(result)
+
+    return results
 
 
 def interactive():
@@ -95,5 +92,5 @@ def interactive():
 
 
 if __name__ == '__main__':
-    inner_transfer_tree, intra_transfer_tree, unigram_freq = load(intra_transfer_file, unigram_file, bigram_file)
+    transition_prob_tree, output_prob_tree, unigram_freq = load(output_prob_file, unigram_file, bigram_file)
     interactive()

@@ -6,10 +6,10 @@ from utility import *
 from commons import *
 
 
-def init_model(inner_transfer_tree, unigram_dict, hidden_candidate_words, top_k_word):
+def init_model(transition_prob_tree, unigram_dict, hidden_candidate_words, top_k_word):
     init_prob = calc_init_prob(unigram_dict, hidden_candidate_words[:, 0])
-    hidden_transfer_matrix = gen_hidden_transfer_matrix(inner_transfer_tree, unigram_dict, hidden_candidate_words, top_k_word)
-    return hidden_transfer_matrix, init_prob
+    hidden_transition_matrix = gen_hidden_transition_matrix(transition_prob_tree, unigram_dict, hidden_candidate_words, top_k_word)
+    return hidden_transition_matrix, init_prob
 
 
 def calc_init_prob(unigram_dict, initial_words):
@@ -26,8 +26,8 @@ def calc_init_prob(unigram_dict, initial_words):
     return init_prob
 
 
-def calc_transfer_prob(unigram_freq, bigram_freq, word_pairs_freq, inner_transfer_file, intra_transfer_file):
-    f_out = codecs.open(inner_transfer_file, 'w', encoding='utf8')
+def calc_transfer_prob(unigram_freq, bigram_freq, word_pairs_freq, transition_prob_file, output_prob_file):
+    f_out = codecs.open(transition_prob_file, 'w', encoding='utf8')
     for key in bigram_freq.keys():
         [first_word, _] = key.split(' ')
         try:
@@ -38,7 +38,7 @@ def calc_transfer_prob(unigram_freq, bigram_freq, word_pairs_freq, inner_transfe
         f_out.write(u'{0} {1}\n'.format(key, bigram_count / float(unigram_count)))
     f_out.close()
 
-    f_out = codecs.open(intra_transfer_file, 'w', encoding='utf8')
+    f_out = codecs.open(output_prob_file, 'w', encoding='utf8')
     for key in word_pairs_freq.keys():
         [first_word, second_word] = key.split(" ")
         try:
@@ -58,11 +58,8 @@ def calc_transfer_prob(unigram_freq, bigram_freq, word_pairs_freq, inner_transfe
     f_out.close()
 
 
-def gen_hidden_transfer_matrix(inner_transfer_tree, unigram_dict, hidden_candidate_words, top_k_word):
-    # Whole number of states in the hmm process
+def gen_hidden_transition_matrix(transition_prob_tree, unigram_dict, hidden_candidate_words, top_k_word):
     state_num = hidden_candidate_words.shape[1]
-
-    # Hidden state to hidden state transfer array
     hidden_transfer_matrix = np.random.rand(state_num-1, top_k_word, top_k_word)
 
     for i in range(state_num-1):
@@ -71,7 +68,7 @@ def gen_hidden_transfer_matrix(inner_transfer_tree, unigram_dict, hidden_candida
             end_words = hidden_candidate_words[:, i+1]
             unigram = unigram_dict[start_word]
             try:
-                hash_leaf = inner_transfer_tree[start_word]
+                hash_leaf = transition_prob_tree[start_word]
             except:
                 print 'key not exist in inner transfer tree'
                 raise

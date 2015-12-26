@@ -10,6 +10,7 @@ def process_raw_corpus(corpus_list, output_corpus_file):
     outputs = []
     f_out = codecs.open(output_corpus_file, 'w', encoding='utf8')
     for filename in corpus_list:
+        print filename
         filepath = os.path.join(raw_corpus_path, filename)
         f_in = codecs.open(filepath, 'r', encoding='utf8')
         while True:
