@@ -7,7 +7,8 @@ from utility import *
 from commons import *
 
 top_k_word = 20
-top_k_candidate = 10
+top_k_candidate = 20
+top_k_output = 5
 
 
 def gen_candidates(first_half, hash_leaf, k):
@@ -43,7 +44,7 @@ def deal_repeat(first_half, second_half):
     return second_half
 
 
-def gen_couplet(first_half):
+def gen_couplet(transition_prob_tree, output_prob_tree, unigram_freq, first_half):
     assert type(first_half) == unicode
     couplet_length = len(first_half)
     visible_words = np.array([first_half[i] for i in range (couplet_length)])
@@ -71,26 +72,39 @@ def gen_couplet(first_half):
     optimal_path, prob = viterbi(transition_prob, output_prob, init_prob, [], visible_words, top_k_word, top_k_candidate)
     optimal_path = deal_repeat(first_half, optimal_path)
 
-    results = []
+    score_table = []
     for i in range(optimal_path.shape[0]):
         result = ''
         for j in range(optimal_path.shape[1]):
             result += hidden_candidate_words[optimal_path[i, j], j]
-        print result
-        results.append(result)
+        score = rank_func(output_prob_tree, first_half, result)
+        score_table.append((score, result))
 
+    results = sorted(score_table, reverse=True)[:top_k_output]
     return results
 
 
+def rank_func(output_prob_tree, first_half, second_half):
+    assert len(first_half) == len(second_half)
+    score = 1
+    for i in range(len(first_half)):
+        xi = first_half[i]
+        yi = second_half[i]
+        score *= output_prob_tree[xi][yi]
+    return score
+
+
 def interactive():
+    transition_prob_tree, output_prob_tree, unigram_freq = load(output_prob_file, unigram_file, bigram_file)
     while True:
         first_half = raw_input('Please input the first half of the couplet. Input "q" to leave.\n')
-        first_half = first_half.decode("gbk")
+        first_half = first_half.decode('gbk')
         if first_half == u'q':
             sys.exit()
-        gen_couplet(first_half)
+        results = gen_couplet(transition_prob_tree, output_prob_tree, unigram_freq, first_half)
+        for result in results:
+            print result[1]
 
 
 if __name__ == '__main__':
-    transition_prob_tree, output_prob_tree, unigram_freq = load(output_prob_file, unigram_file, bigram_file)
     interactive()

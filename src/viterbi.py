@@ -17,7 +17,7 @@ def viterbi(hidden_transition, hidden_visible_transition, init_prob, hidden_cand
         state_optimal_path[:, i+1] = np.argmax(state_prob_matrix[:,i].reshape(-1, 1) * hidden_transition[i, :, :] * hidden_visible_transition[:, i], 0)
 
     state_optimal_path[:,-1] = [i for i in range(top_k_words)]
-    max_last_word_index = np.argmax(state_prob_matrix[:,state_num-1])
+    max_last_word_index = np.argmax(state_prob_matrix[:, state_num-1])
     max_prob = state_prob_matrix[max_last_word_index, state_num-1]
 
     last_prob_temp = np.copy(state_prob_matrix[:, state_num-1])
