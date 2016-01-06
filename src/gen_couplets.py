@@ -1,6 +1,12 @@
 # -*- encoding:utf-8 -*-
 import sys
+import re
+import math
 import numpy as np
+import jieba
+jieba.set_dictionary('..\\data\\dict.txt')
+import jieba.posseg as pseg
+import pypinyin
 from hmm import init_model
 from viterbi import viterbi
 from utility import *
@@ -72,39 +78,78 @@ def gen_couplet(transition_prob_tree, output_prob_tree, unigram_freq, first_half
     optimal_path, prob = viterbi(transition_prob, output_prob, init_prob, [], visible_words, top_k_word, top_k_candidate)
     optimal_path = deal_repeat(first_half, optimal_path)
 
-    score_table = []
+    results = []
     for i in range(optimal_path.shape[0]):
-        result = ''
+        second_half = ''
         for j in range(optimal_path.shape[1]):
-            result += hidden_candidate_words[optimal_path[i, j], j]
-        score = rank_func(output_prob_tree, first_half, result)
-        score_table.append((score, result))
+            second_half += hidden_candidate_words[optimal_path[i, j], j]
+        score = ranking_function(output_prob_tree, first_half, second_half)
+        results.append((score, second_half))
 
-    results = sorted(score_table, reverse=True)[:top_k_output]
+
+    results = sorted(results, reverse=True)[:top_k_output]
     return results
 
 
-def rank_func(output_prob_tree, first_half, second_half):
-    assert len(first_half) == len(second_half)
-    score = 1
-    for i in range(len(first_half)):
-        xi = first_half[i]
-        yi = second_half[i]
-        score *= output_prob_tree[xi][yi]
+def ranking_function(output_prob_tree, cx, cy):
+    # 平仄
+    x_py = pypinyin.pinyin(cx, style=pypinyin.TONE2)
+    y_py = pypinyin.pinyin(cy, style=pypinyin.TONE2)
+    x_pz = map(lambda i: -1 if int(re.search('\d', i[0]).group(0)) <= 2 else 1, x_py)
+    y_pz = map(lambda i: -1 if int(re.search('\d', i[0]).group(0)) <= 2 else 1, y_py)
+    pingze_score = sum(map(lambda i, j: i + j == 0, x_pz, y_pz)) / float(len(cx)) + 0.001
+
+    def sigmoid(x):
+        return 1 / (1 + math.e ** (-x))
+
+    def pos_eq(x_pos, y_pos):
+        return x_pos == y_pos or x_pos in y_pos or y_pos in x_pos
+
+    import operator
+    smooth_value = 0.001
+    freq_amp = 10 ** math.sqrt(len(cx))
+
+    # 词性
+    cx_pos = map(lambda x: zip(*pseg.lcut(x)[0])[0][1], cx)
+    cy_pos = map(lambda y: zip(*pseg.lcut(y)[0])[0][1], cy)
+    pos_score = reduce(operator.add, map(lambda x, y: float(1)/len(cx) if pos_eq(x, y) else 0, cx_pos, cy_pos))
+    pos_score += smooth_value
+
+    # 输出概率
+    out_score = reduce(operator.mul, map(lambda x, y: output_prob_tree[x][y] * freq_amp, cx, cy))
+    out_score = sigmoid(out_score)
+    out_score += smooth_value
+
+    # 整合
+    score = pingze_score * out_score * pos_score
+    # score = pingze_score * pos_score
+
+    # print 'ranking', cy
+    # print 'pingze', pingze_score
+    # print 'pos', pos_score
+    # print 'freq', out_score
+
     return score
 
 
-def interactive():
+def interactive(encoding='gbk'):
     transition_prob_tree, output_prob_tree, unigram_freq = load(output_prob_file, unigram_file, bigram_file)
+    print 'Specified encoding:', encoding
     while True:
         first_half = raw_input('Please input the first half of the couplet. Input "q" to leave.\n')
-        first_half = first_half.decode('gbk')
+        first_half = first_half.decode(encoding)
         if first_half == u'q':
             sys.exit()
         results = gen_couplet(transition_prob_tree, output_prob_tree, unigram_freq, first_half)
         for result in results:
-            print result[1]
+            print result[1], result[0]
 
 
 if __name__ == '__main__':
-    interactive()
+    # interactive()
+    try:
+        encoding = sys.argv[1]
+    except:
+        encoding='gbk'
+
+    interactive(encoding)

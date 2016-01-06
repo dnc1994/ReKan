@@ -1,24 +1,25 @@
 # -*- encoding:utf-8 -*-
-raw_corpus_path = 'C:\\Home\\Projects\\ReKan\\corpus\\raw'
-corpus_path = 'C:\\Home\\Projects\\ReKan\\corpus'
-data_path = 'C:\\Home\\Projects\\ReKan\\data'
+raw_corpus_path = '..\\corpus\\raw'
+corpus_path = '..\\corpus'
+data_path = '..\\data'
 
-full_corpus_file = 'C:\\Home\\Projects\\ReKan\\corpus\\corpus.txt'
+full_corpus_file = '..\\corpus\\corpus.txt'
 
-train_corpus_file = 'C:\\Home\\Projects\\ReKan\\data\\corpus.txt'
-train_corpus_ngrams_file = 'C:\\Home\\Projects\\ReKan\\data\\corpus_ngrams.txt'
+train_corpus_file = '..\\data\\corpus.txt'
+train_corpus_ngrams_file = '..\\data\\corpus_ngrams.txt'
 
-unigram_file = 'C:\\Home\\Projects\\ReKan\\data\\unigram.txt'
-bigram_file = 'C:\\Home\\Projects\\ReKan\\data\\bigram.txt'
-word_pairs_file = 'C:\\Home\\Projects\\ReKan\\data\\word_pairs.txt'
-transition_prob_file = 'C:\\Home\\Projects\\ReKan\\data\\transition_prob.txt'
-output_prob_file = 'C:\\Home\\Projects\\ReKan\\data\\output_prob.txt'
+unigram_file = '..\\data\\unigram.txt'
+bigram_file = '..\\data\\bigram.txt'
+word_pairs_file = '..\\data\\word_pairs.txt'
+transition_prob_file = '..\\data\\transition_prob.txt'
+output_prob_file = '..\\data\\output_prob.txt'
 
 corpus_list = [
+    'poems.txt',
+    'gujin_couplets.txt',
     '300_tang_poems.txt',
     'famous_couplets.txt',
-    'new_year_couplets_1.txt',
-    'poems.txt'
+    'new_year_couplets.txt',
 ]
 
 punc = u'，|。|？|！|；|、'
